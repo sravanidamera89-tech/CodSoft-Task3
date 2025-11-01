@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Basic Calculator — HTML / CSS / JS</title>
+  <style>
+    * { box-sizing: border-box; }
+    html,body {
+      height:100%; margin:0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background: #f3f4f6;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .calculator {
+      width: 340px;
+      background: linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(12, 20, 40, 0.12);
+      padding: 18px;
+    }
+    .display {
+      height: 72px;
+      background: #0f172a;
+      color: #e6eef8;
+      border-radius: 10px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-end;
+      font-size: 1.4rem;
+      overflow:hidden;
+      word-break:break-all;
+    }
+    .display .small {
+      font-size: 0.72rem;
+      opacity: 0.7;
+      color: #cbd5e1;
+    }
+    .buttons {
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 12px;
+      margin-top: 14px;
+    }
+    button.btn {
+      height: 56px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(12,20,40,0.06);
+    }
+    .btn.operator { background: linear-gradient(180deg,#ef4444,#dc2626); color:#fff; }
+    .btn.func { background: linear-gradient(180deg,#e6eaf2,#dbe3f0); }
+    .btn.number { background: linear-gradient(180deg,#ffffff,#f8fafc); }
+    .btn.equal { background: linear-gradient(180deg,#06b6d4,#0891b2); color:#fff; grid-column: span 2; }
+    .btn.zero { grid-column: span 2; }
+    @media (max-width:400px){
+      .calculator{ width: 92vw; }
+      .display{ font-size:1.1rem; height:64px }
+      button.btn{ height:52px }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" role="application" aria-label="Basic calculator">
+    <div id="display" class="display" aria-live="polite">
+      <div id="smallDisplay" class="small">&nbsp;</div>
+      <div id="largeDisplay">0</div>
+    </div>
+
+    <div class="buttons" role="group" aria-label="Calculator buttons">
+      <button class="btn func" data-action="clear">C</button>
+      <button class="btn func" data-action="back">⌫</button>
+      <button class="btn func" data-action="percent">%</button>
+      <button class="btn operator" data-action="/">÷</button>
+
+      <button class="btn number" data-action="7">7</button>
+      <button class="btn number" data-action="8">8</button>
+      <button class="btn number" data-action="9">9</button>
+      <button class="btn operator" data-action="*">×</button>
+
+      <button class="btn number" data-action="4">4</button>
+      <button class="btn number" data-action="5">5</button>
+      <button class="btn number" data-action="6">6</button>
+      <button class="btn operator" data-action="-">−</button>
+
+      <button class="btn number" data-action="1">1</button>
+      <button class="btn number" data-action="2">2</button>
+      <button class="btn number" data-action="3">3</button>
+      <button class="btn operator" data-action="+">+</button>
+
+      <button class="btn number zero" data-action="0">0</button>
+      <button class="btn number" data-action=".">.</button>
+      <button class="btn equal" data-action="=">=</button>
+    </div>
+  </main>
+
+  <script>
+    const smallDisplay = document.getElementById('smallDisplay');
+    const largeDisplay = document.getElementById('largeDisplay');
+    const buttons = document.querySelectorAll('.buttons button');
+
+    let currentInput = '0';
+    let previousInput = null;
+    let operator = null;
+    let resultJustCalculated = false;
+
+    function updateDisplay() {
+      largeDisplay.textContent = currentInput;
+      if (previousInput !== null && operator !== null) {
+        smallDisplay.textContent = `${previousInput} ${operator}`;
+      } else {
+        smallDisplay.textContent = '\u00A0';
+      }
+    }
+
+    function clearAll() {
+      currentInput = '0';
+      previousInput = null;
+      operator = null;
+      resultJustCalculated = false;
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (resultJustCalculated) {
+        clearAll();
+        return;
+      }
+      if (currentInput.length === 1) {
+        currentInput = '0';
+      } else {
+        currentInput = currentInput.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    function appendNumber(char) {
+      if (resultJustCalculated) {
+        currentInput = (char === '.') ? '0.' : char;
+        resultJustCalculated = false;
+        updateDisplay();
+        return;
+      }
+      if (char === '.') {
+        if (currentInput.includes('.')) return;
+        currentInput += '.';
+      } else {
+        if (currentInput === '0') {
+          currentInput = char;
+        } else {
+          currentInput += char;
+        }
+      }
+      updateDisplay();
+    }
+
+    function percent() {
+      const num = parseFloat(currentInput);
+      if (isNaN(num)) return;
+      currentInput = String(num / 100);
+      updateDisplay();
+    }
+
+    function compute() {
+      if (previousInput === null || operator === null) return;
+      const a = parseFloat(previousInput);
+      const b = parseFloat(currentInput);
+      if (isNaN(a) || isNaN(b)) return;
+
+      let res;
+      if (operator === '+') res = a + b;
+      else if (operator === '-') res = a - b;
+      else if (operator === '*') res = a * b;
+      else if (operator === '/') {
+        if (b === 0) {
+          alert('Error: Division by zero');
+          clearAll();
+          return;
+        }
+        res = a / b;
+      }
+
+      res = parseFloat(res.toPrecision(12));
+      currentInput = String(res);
+      previousInput = null;
+      operator = null;
+      resultJustCalculated = true;
+      updateDisplay();
+    }
+
+    function handleOperator(op) {
+      if (operator && !resultJustCalculated) {
+        compute();
+      }
+      previousInput = currentInput;
+      operator = op;
+      resultJustCalculated = false;
+      currentInput = '0';
+      updateDisplay();
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        if (action === 'clear') clearAll();
+        else if (action === 'back') backspace();
+        else if (action === 'percent') percent();
+        else if (action === '=') compute();
+        else if (['+','-','*','/'].includes(action)) handleOperator(action);
+        else if (action === '.' || /\d/.test(action)) appendNumber(action);
+      });
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
